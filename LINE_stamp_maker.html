@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌟 LINEスタンプメーカー</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Sans', 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px 15px 40px;
+    }
+
+    .app { max-width: 800px; margin: 0 auto; }
+
+    header {
+      text-align: center;
+      color: white;
+      padding: 20px 0 25px;
+    }
+    header h1 { font-size: 2em; margin-bottom: 6px; letter-spacing: 0.02em; }
+    header p  { font-size: 1em; opacity: 0.85; }
+
+    /* ── Progress ── */
+    .progress-card {
+      background: white;
+      border-radius: 20px;
+      padding: 18px 22px 12px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+    }
+    .step-track {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+    .step-track::before {
+      content: '';
+      position: absolute;
+      top: 15px; left: 15px; right: 15px;
+      height: 3px;
+      background: #e8e8e8;
+      z-index: 0;
+    }
+    .step-dot {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: #ddd;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: bold; font-size: 0.85em;
+      z-index: 1; position: relative;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+    .step-dot.active { background: #667eea; color: white; box-shadow: 0 0 0 4px #d4daff; }
+    .step-dot.done   { background: #4CAF50; color: white; }
+    .step-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 0.72em;
+      color: #aaa;
+    }
+    .step-labels span { width: 32px; text-align: center; }
+
+    /* ── Card ── */
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 28px 28px 22px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+      margin-bottom: 18px;
+    }
+    .card h2 {
+      font-size: 1.35em;
+      color: #2d2d2d;
+      margin-bottom: 10px;
+    }
+    .card p { color: #555; line-height: 1.7; margin-bottom: 12px; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 11px 26px;
+      border: none; border-radius: 50px;
+      font-size: 1em; font-weight: bold;
+      cursor: pointer; transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-primary { background: linear-gradient(135deg,#667eea,#764ba2); color: white; }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 16px rgba(102,126,234,0.45); }
+    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-back { background: #eee; color: #666; }
+    .btn-back:hover { background: #e0e0e0; }
+    .btn-success { background: linear-gradient(135deg,#43c06f,#38a05e); color: white; }
+    .btn-success:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 16px rgba(67,192,111,0.4); }
+    .btn-success:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Count grid ── */
+    .count-grid {
+      display: grid;
+      grid-template-columns: repeat(5,1fr);
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .count-btn {
+      padding: 18px 8px;
+      border: 3px solid #ddd; border-radius: 14px;
+      background: white; cursor: pointer;
+      text-align: center;
+      font-size: 1.15em; font-weight: bold;
+      transition: all 0.2s;
+    }
+    .count-btn .sub { font-size: 0.58em; color: #aaa; font-weight: normal; margin-top: 2px; }
+    .count-btn.selected { border-color: #667eea; background: #f0f0ff; color: #667eea; }
+    .count-btn:hover { border-color: #667eea; transform: translateY(-2px); }
+
+    /* ── Drop zone ── */
+    .drop-zone {
+      border: 3px dashed #ccc; border-radius: 15px;
+      padding: 36px 20px; text-align: center;
+      cursor: pointer; transition: all 0.2s;
+      margin: 18px 0;
+    }
+    .drop-zone:hover, .drop-zone.dragover { border-color: #667eea; background: #f7f7ff; }
+    .drop-zone .dz-icon { font-size: 2.8em; margin-bottom: 8px; }
+    .drop-zone h3 { color: #333; margin-bottom: 5px; }
+    .drop-zone p  { color: #aaa; font-size: 0.88em; line-height: 1.5; }
+
+    /* ── Progress bar ── */
+    .pbar-wrap { margin: 6px 0 14px; }
+    .pbar-label { font-size: 0.88em; color: #666; margin-bottom: 5px; }
+    .pbar {
+      background: #eee; border-radius: 50px; height: 10px; overflow: hidden;
+    }
+    .pbar-fill {
+      height: 100%;
+      background: linear-gradient(90deg,#667eea,#764ba2);
+      border-radius: 50px;
+      transition: width 0.35s;
+    }
+
+    /* ── Stamp grid ── */
+    .stamp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px,1fr));
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .stamp-item {
+      position: relative;
+      aspect-ratio: 370/320;
+      border-radius: 10px; overflow: hidden;
+      border: 2px solid #ddd;
+      background-image:
+        linear-gradient(45deg,#ddd 25%,transparent 25%),
+        linear-gradient(-45deg,#ddd 25%,transparent 25%),
+        linear-gradient(45deg,transparent 75%,#ddd 75%),
+        linear-gradient(-45deg,transparent 75%,#ddd 75%);
+      background-size: 10px 10px;
+      background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+      background-color: white;
+    }
+    .stamp-item img { width: 100%; height: 100%; object-fit: contain; }
+    .stamp-num {
+      position: absolute; top: 4px; right: 4px;
+      background: rgba(102,126,234,0.85); color: white;
+      border-radius: 50%; width: 20px; height: 20px;
+      font-size: 0.68em; font-weight: bold;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .stamp-del {
+      position: absolute; top: 4px; left: 4px;
+      background: rgba(220,50,50,0.8); color: white;
+      border: none; border-radius: 50%;
+      width: 20px; height: 20px;
+      font-size: 0.75em; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .stamp-item:hover .stamp-del { opacity: 1; }
+
+    /* ── Single preview ── */
+    .single-preview {
+      display: flex; align-items: center; gap: 18px;
+      background: #f7f8ff; border-radius: 14px;
+      padding: 16px; margin: 15px 0;
+    }
+    .checker-box {
+      flex-shrink: 0; border-radius: 10px; border: 2px solid #ddd; overflow: hidden;
+      background-image:
+        linear-gradient(45deg,#ddd 25%,transparent 25%),
+        linear-gradient(-45deg,#ddd 25%,transparent 25%),
+        linear-gradient(45deg,transparent 75%,#ddd 75%),
+        linear-gradient(-45deg,transparent 75%,#ddd 75%);
+      background-size: 10px 10px;
+      background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+      background-color: white;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .checker-box img { width: 100%; height: 100%; object-fit: contain; }
+
+    /* ── Info / success boxes ── */
+    .info-box {
+      background: #f0f4ff; border-left: 4px solid #667eea;
+      border-radius: 0 10px 10px 0;
+      padding: 11px 14px; margin: 14px 0;
+      font-size: 0.88em; color: #555; line-height: 1.6;
+    }
+    .success-box {
+      background: #f0fff6; border: 2px solid #4CAF50;
+      border-radius: 16px; padding: 24px 20px;
+      text-align: center; margin-bottom: 20px;
+    }
+
+    /* ── File list ── */
+    .file-list { list-style: none; margin: 12px 0 4px; }
+    .file-list li {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 0; border-bottom: 1px solid #f0f0f0;
+      font-size: 0.88em; color: #444;
+    }
+    .file-list li:last-child { border-bottom: none; }
+
+    /* ── Next steps ── */
+    .next-steps { list-style: none; counter-reset: ns; margin: 12px 0; }
+    .next-steps li {
+      counter-increment: ns;
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 10px 0; border-bottom: 1px solid #f0f0f0;
+    }
+    .next-steps li:last-child { border-bottom: none; }
+    .next-steps li::before {
+      content: counter(ns);
+      background: #667eea; color: white;
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: bold; font-size: 0.82em; flex-shrink: 0; margin-top: 1px;
+    }
+    .next-steps li strong { display: block; margin-bottom: 2px; }
+    .next-steps li span { font-size: 0.85em; color: #777; }
+
+    /* ── Nav ── */
+    .step-nav {
+      display: flex; gap: 10px; justify-content: flex-end;
+      margin-top: 22px; padding-top: 18px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ── Done banner ── */
+    .done-banner {
+      background: linear-gradient(135deg,#43c06f,#38a05e);
+      color: white; border-radius: 12px;
+      padding: 12px 16px; font-weight: bold;
+      text-align: center; margin: 10px 0;
+    }
+
+    @media (max-width: 520px) {
+      .count-grid { grid-template-columns: repeat(3,1fr); }
+      .card { padding: 20px 16px 16px; }
+      header h1 { font-size: 1.6em; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <h1>🌟 LINEスタンプメーカー</h1>
+    <p>かんたんステップでオリジナルスタンプを作ろう！</p>
+  </header>
+
+  <!-- Progress -->
+  <div class="progress-card">
+    <div class="step-track" id="stepTrack">
+      <div class="step-dot active" data-step="1">1</div>
+      <div class="step-dot"        data-step="2">2</div>
+      <div class="step-dot"        data-step="3">3</div>
+      <div class="step-dot"        data-step="4">4</div>
+      <div class="step-dot"        data-step="5">5</div>
+    </div>
+    <div class="step-labels">
+      <span>枚数</span>
+      <span>スタンプ</span>
+      <span>メイン</span>
+      <span>タブ</span>
+      <span>完成！</span>
+    </div>
+  </div>
+
+  <!-- ===== STEP 1 ===== -->
+  <div class="card" id="step1">
+    <h2>🎯 ステップ1：スタンプの枚数を選ぼう</h2>
+    <p>LINEスタンプは <strong>8・16・24・32・40枚</strong> のどれかで作るよ。<br>
+       はじめての人は <strong>8枚</strong> がいちばんかんたんでおすすめ！</p>
+
+    <div class="count-grid">
+      <div class="count-btn selected" data-count="8" onclick="selectCount(8)">
+        8枚<div class="sub">おすすめ</div>
+      </div>
+      <div class="count-btn" data-count="16" onclick="selectCount(16)">16枚</div>
+      <div class="count-btn" data-count="24" onclick="selectCount(24)">24枚</div>
+      <div class="count-btn" data-count="32" onclick="selectCount(32)">32枚</div>
+      <div class="count-btn" data-count="40" onclick="selectCount(40)">40枚</div>
+    </div>
+
+    <div class="info-box">
+      💡 <strong>AIで画像を生成するときのポイント</strong><br>
+      ・背景を <strong>透明（透過PNG）</strong> で保存してね<br>
+      ・背景が白いと、LINEで使ったときに四角く見えてしまうよ<br>
+      ・ChatGPT・Midjourney・Adobe Fireflyなどが使えるよ
+    </div>
+
+    <div class="step-nav">
+      <button class="btn btn-primary" onclick="goToStep(2)">次へ →</button>
+    </div>
+  </div>
+
+  <!-- ===== STEP 2 ===== -->
+  <div class="card hidden" id="step2">
+    <h2>🖼️ ステップ2：スタンプ画像をアップロード</h2>
+    <p>AIで作った画像をここに入れてね。<strong id="countLabel">8枚</strong>必要だよ。<br>
+       自動でサイズを <strong>370×320ピクセル</strong> に調整するよ！</p>
+
+    <div id="stampDropZone" class="drop-zone"
+         onclick="document.getElementById('stampInput').click()"
+         ondragover="onDragOver(event,'stampDropZone')"
+         ondragleave="onDragLeave('stampDropZone')"
+         ondrop="onDrop(event,'stamp')">
+      <div class="dz-icon">🖼️</div>
+      <h3>ここに画像をドラッグ＆ドロップ</h3>
+      <p>またはクリックしてファイルを選ぼう<br>（PNG・JPG・GIF対応・複数同時選択OK）</p>
+    </div>
+    <input type="file" id="stampInput" accept="image/*" multiple class="hidden"
+           onchange="onFileSelect(event,'stamp')">
+
+    <div id="stampProgressWrap" class="hidden pbar-wrap">
+      <div class="pbar-label">
+        <span id="stampDoneCount">0</span> / <span id="stampTotalLabel">8</span>枚 完了
+      </div>
+      <div class="pbar"><div class="pbar-fill" id="stampFill" style="width:0%"></div></div>
+    </div>
+    <div id="stampDoneBanner" class="done-banner hidden">
+      🎉 <span id="stampTotalLabel2">8</span>枚ぜんぶそろったよ！次へ進もう
+    </div>
+    <div class="stamp-grid" id="stampGrid"></div>
+
+    <div class="step-nav">
+      <button class="btn btn-back" onclick="goToStep(1)">← 戻る</button>
+      <button class="btn btn-primary" id="s2Next" disabled onclick="goToStep(3)">次へ →</button>
+    </div>
+  </div>
+
+  <!-- ===== STEP 3 ===== -->
+  <div class="card hidden" id="step3">
+    <h2>🏠 ステップ3：メイン画像をアップロード</h2>
+    <p>LINEストアの <strong>看板になる1枚</strong> だよ。スタンプを代表するかわいい画像を選ぼう！<br>
+       自動で <strong>240×240ピクセル</strong> に調整するよ！</p>
+
+    <div class="info-box">
+      💡 スタンプ画像の中でいちばんお気に入りを使うのがおすすめ！
+    </div>
+
+    <div id="mainDropZone" class="drop-zone"
+         onclick="document.getElementById('mainInput').click()"
+         ondragover="onDragOver(event,'mainDropZone')"
+         ondragleave="onDragLeave('mainDropZone')"
+         ondrop="onDrop(event,'main')">
+      <div class="dz-icon">🏠</div>
+      <h3>メイン画像をここに入れよう</h3>
+      <p>1枚だけ選んでね（PNG・JPG対応）</p>
+    </div>
+    <input type="file" id="mainInput" accept="image/*" class="hidden"
+           onchange="onFileSelect(event,'main')">
+
+    <div id="mainPreview" class="hidden">
+      <div class="single-preview">
+        <div class="checker-box" style="width:100px;height:100px;">
+          <img id="mainImg" src="" alt="メイン画像">
+        </div>
+        <div>
+          <div style="color:#4CAF50;font-weight:bold;font-size:1.05em;">✅ アップロード完了！</div>
+          <div style="font-size:0.82em;color:#888;margin-top:4px;">240×240px に自動調整済み</div>
+          <button class="btn btn-back" style="margin-top:10px;padding:6px 14px;font-size:0.85em;"
+                  onclick="clearSingle('main')">やりなおす</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-nav">
+      <button class="btn btn-back" onclick="goToStep(2)">← 戻る</button>
+      <button class="btn btn-primary" id="s3Next" disabled onclick="goToStep(4)">次へ →</button>
+    </div>
+  </div>
+
+  <!-- ===== STEP 4 ===== -->
+  <div class="card hidden" id="step4">
+    <h2>📌 ステップ4：タブ画像をアップロード</h2>
+    <p>LINEのスタンプ一覧で使われる <strong>小さいアイコン</strong> だよ。<br>
+       自動で <strong>96×74ピクセル</strong> に調整するよ！</p>
+
+    <div class="info-box">
+      💡 キャラクターの顔だけや、シンプルなマークが見やすくておすすめ！
+    </div>
+
+    <div id="tabDropZone" class="drop-zone"
+         onclick="document.getElementById('tabInput').click()"
+         ondragover="onDragOver(event,'tabDropZone')"
+         ondragleave="onDragLeave('tabDropZone')"
+         ondrop="onDrop(event,'tab')">
+      <div class="dz-icon">📌</div>
+      <h3>タブ画像をここに入れよう</h3>
+      <p>1枚だけ選んでね（PNG・JPG対応）</p>
+    </div>
+    <input type="file" id="tabInput" accept="image/*" class="hidden"
+           onchange="onFileSelect(event,'tab')">
+
+    <div id="tabPreview" class="hidden">
+      <div class="single-preview">
+        <div class="checker-box" style="width:96px;height:74px;">
+          <img id="tabImg" src="" alt="タブ画像">
+        </div>
+        <div>
+          <div style="color:#4CAF50;font-weight:bold;font-size:1.05em;">✅ アップロード完了！</div>
+          <div style="font-size:0.82em;color:#888;margin-top:4px;">96×74px に自動調整済み</div>
+          <button class="btn btn-back" style="margin-top:10px;padding:6px 14px;font-size:0.85em;"
+                  onclick="clearSingle('tab')">やりなおす</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-nav">
+      <button class="btn btn-back" onclick="goToStep(3)">← 戻る</button>
+      <button class="btn btn-primary" id="s4Next" disabled onclick="goToStep(5)">次へ →</button>
+    </div>
+  </div>
+
+  <!-- ===== STEP 5 ===== -->
+  <div class="card hidden" id="step5">
+    <h2>🎉 ステップ5：完成！ダウンロードしよう</h2>
+
+    <div class="success-box">
+      <div style="font-size:3.5em;">🎊</div>
+      <h3 style="margin:10px 0 6px;color:#2d8a4e;font-size:1.3em;">ぜんぶそろったよ！</h3>
+      <p style="color:#666;font-size:0.92em;margin-bottom:18px;">下のボタンを押してZIPファイルをダウンロードしてね</p>
+      <button class="btn btn-success" id="dlBtn"
+              style="font-size:1.1em;padding:14px 42px;"
+              onclick="downloadZip()">
+        📦 ZIPをダウンロード
+      </button>
+    </div>
+
+    <h3 style="margin:22px 0 8px;color:#333;">📋 ZIPの中のファイル一覧</h3>
+    <ul class="file-list" id="fileList"></ul>
+
+    <h3 style="margin:24px 0 8px;color:#333;">📤 次にやること：LINEに出そう！</h3>
+    <ol class="next-steps">
+      <li>
+        <div>
+          <strong>LINE Creators Marketを開く</strong>
+          <span>creator.line.me にアクセスして、LINEアカウントでログインしよう</span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>「スタンプ」→「新規登録」をクリック</strong>
+          <span>スタンプの名前と説明文（日本語・英語）を入力しよう</span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>ZIPの中の画像をアップロード</strong>
+          <span>スタンプ画像 → メイン画像 → タブ画像の順で入れよう</span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>「申請」ボタンを押す</strong>
+          <span>審査に約1週間かかるよ。承認されたら販売スタート！🚀</span>
+        </div>
+      </li>
+    </ol>
+
+    <div class="info-box" style="margin-top:22px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      🔄 最初からやりなおしたい場合は
+      <button class="btn btn-primary" style="padding:7px 18px;font-size:0.88em;"
+              onclick="resetAll()">リセット</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ── State ──
+let currentStep = 1;
+let stampCount  = 8;
+let stamps      = [];   // [{blob, url, name}, ...]
+let mainImage   = null; // {blob, url}
+let tabImage    = null; // {blob, url}
+
+updateDots();
+
+// ── Navigation ──
+function goToStep(n) {
+  document.getElementById('step' + currentStep).classList.add('hidden');
+  currentStep = n;
+  document.getElementById('step' + currentStep).classList.remove('hidden');
+  updateDots();
+  if (n === 5) buildFileList();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function updateDots() {
+  document.querySelectorAll('.step-dot').forEach(d => {
+    const s = +d.dataset.step;
+    d.classList.remove('active','done');
+    if (s < currentStep)      d.classList.add('done');
+    else if (s === currentStep) d.classList.add('active');
+  });
+}
+
+// ── Count ──
+function selectCount(n) {
+  stampCount = n;
+  document.querySelectorAll('.count-btn').forEach(b =>
+    b.classList.toggle('selected', +b.dataset.count === n));
+  if (stamps.length) {
+    stamps.forEach(s => URL.revokeObjectURL(s.url));
+    stamps = [];
+    document.getElementById('stampGrid').innerHTML = '';
+    document.getElementById('stampProgressWrap').classList.add('hidden');
+    document.getElementById('stampDoneBanner').classList.add('hidden');
+    document.getElementById('s2Next').disabled = true;
+  }
+}
+
+// ── Drag & Drop ──
+function onDragOver(e, id) { e.preventDefault(); document.getElementById(id).classList.add('dragover'); }
+function onDragLeave(id)    { document.getElementById(id).classList.remove('dragover'); }
+function onDrop(e, type) {
+  e.preventDefault();
+  onDragLeave(type + 'DropZone');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  processFiles(files, type);
+}
+function onFileSelect(e, type) {
+  const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+  processFiles(files, type);
+  e.target.value = '';
+}
+
+// ── Process files ──
+async function processFiles(files, type) {
+  if (type === 'stamp') {
+    const remaining = stampCount - stamps.length;
+    const toProcess = files.slice(0, remaining);
+    for (const f of toProcess) {
+      const blob = await resizeImage(f, 370, 320);
+      const url  = URL.createObjectURL(blob);
+      const name = String(stamps.length + 1).padStart(2,'0') + '.png';
+      stamps.push({blob, url, name});
+      renderStampItem(stamps.length - 1, url);
+      updateStampBar();
+    }
+    if (files.length > remaining && remaining > 0) {
+      showToast(`${remaining}枚分だけ追加したよ（上限${stampCount}枚）`);
+    }
+  } else if (type === 'main') {
+    const blob = await resizeImage(files[0], 240, 240);
+    const url  = URL.createObjectURL(blob);
+    if (mainImage) URL.revokeObjectURL(mainImage.url);
+    mainImage = {blob, url};
+    document.getElementById('mainImg').src = url;
+    document.getElementById('mainPreview').classList.remove('hidden');
+    document.getElementById('mainDropZone').classList.add('hidden');
+    document.getElementById('s3Next').disabled = false;
+  } else if (type === 'tab') {
+    const blob = await resizeImage(files[0], 96, 74);
+    const url  = URL.createObjectURL(blob);
+    if (tabImage) URL.revokeObjectURL(tabImage.url);
+    tabImage = {blob, url};
+    document.getElementById('tabImg').src = url;
+    document.getElementById('tabPreview').classList.remove('hidden');
+    document.getElementById('tabDropZone').classList.add('hidden');
+    document.getElementById('s4Next').disabled = false;
+  }
+}
+
+// ── Stamp UI ──
+function renderStampItem(idx, url) {
+  const grid = document.getElementById('stampGrid');
+  const item = document.createElement('div');
+  item.className = 'stamp-item';
+  item.id = 'si-' + idx;
+  item.innerHTML = `
+    <img src="${url}" alt="スタンプ${idx+1}">
+    <button class="stamp-del" onclick="deleteStamp(${idx})" title="削除">✕</button>
+    <div class="stamp-num">${idx+1}</div>`;
+  grid.appendChild(item);
+}
+
+function deleteStamp(idx) {
+  URL.revokeObjectURL(stamps[idx].url);
+  stamps.splice(idx, 1);
+  // Re-number and re-render
+  const grid = document.getElementById('stampGrid');
+  grid.innerHTML = '';
+  stamps.forEach((s,i) => { s.name = String(i+1).padStart(2,'0')+'.png'; renderStampItem(i, s.url); });
+  updateStampBar();
+}
+
+function updateStampBar() {
+  const n = stamps.length, t = stampCount;
+  document.getElementById('stampDoneCount').textContent = n;
+  document.getElementById('stampTotalLabel').textContent = t;
+  document.getElementById('stampTotalLabel2').textContent = t;
+  document.getElementById('countLabel').textContent = t + '枚';
+  document.getElementById('stampFill').style.width = (n/t*100) + '%';
+  document.getElementById('stampProgressWrap').classList.remove('hidden');
+
+  const done = n >= t;
+  document.getElementById('stampDoneBanner').classList.toggle('hidden', !done);
+  document.getElementById('stampDropZone').classList.toggle('hidden', done);
+  document.getElementById('s2Next').disabled = !done;
+}
+
+// ── Clear single ──
+function clearSingle(type) {
+  if (type === 'main') {
+    if (mainImage) { URL.revokeObjectURL(mainImage.url); mainImage = null; }
+    document.getElementById('mainPreview').classList.add('hidden');
+    document.getElementById('mainDropZone').classList.remove('hidden');
+    document.getElementById('s3Next').disabled = true;
+  } else {
+    if (tabImage) { URL.revokeObjectURL(tabImage.url); tabImage = null; }
+    document.getElementById('tabPreview').classList.add('hidden');
+    document.getElementById('tabDropZone').classList.remove('hidden');
+    document.getElementById('s4Next').disabled = true;
+  }
+}
+
+// ── Resize (Canvas) ──
+function resizeImage(file, tw, th) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = tw; c.height = th;
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, tw, th);
+      const scale = Math.min(tw / img.width, th / img.height);
+      const w = img.width * scale, h = img.height * scale;
+      ctx.drawImage(img, (tw-w)/2, (th-h)/2, w, h);
+      URL.revokeObjectURL(url);
+      c.toBlob(blob => resolve(blob), 'image/png');
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
+// ── File list (step 5) ──
+function buildFileList() {
+  const ul = document.getElementById('fileList');
+  ul.innerHTML = '';
+  stamps.forEach((s,i) => {
+    ul.innerHTML += `<li>📄 <code>${s.name}</code><span style="color:#aaa;margin-left:6px;">スタンプ ${i+1}枚目</span></li>`;
+  });
+  ul.innerHTML += `<li>📄 <code>main.png</code><span style="color:#aaa;margin-left:6px;">メイン画像（240×240px）</span></li>`;
+  ul.innerHTML += `<li>📄 <code>tab.png</code><span style="color:#aaa;margin-left:6px;">タブ画像（96×74px）</span></li>`;
+}
+
+// ── ZIP download ──
+async function downloadZip() {
+  const btn = document.getElementById('dlBtn');
+  btn.textContent = '⏳ ZIPを作成中…';
+  btn.disabled = true;
+  try {
+    const zip = new JSZip();
+    stamps.forEach(s => zip.file(s.name, s.blob));
+    zip.file('main.png', mainImage.blob);
+    zip.file('tab.png',  tabImage.blob);
+    const content = await zip.generateAsync({type:'blob', compression:'DEFLATE'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(content);
+    a.download = 'LINE_stamps.zip';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    btn.textContent = '✅ ダウンロード完了！';
+    btn.style.background = 'linear-gradient(135deg,#43c06f,#38a05e)';
+  } catch(e) {
+    btn.textContent = '❌ エラーが発生したよ。もう一度試してね。';
+    btn.disabled = false;
+    console.error(e);
+  }
+}
+
+// ── Reset ──
+function resetAll() {
+  if (!confirm('最初からやりなおしますか？\n（アップロードした画像はすべて消えます）')) return;
+  stamps.forEach(s => URL.revokeObjectURL(s.url));
+  stamps = [];
+  if (mainImage) { URL.revokeObjectURL(mainImage.url); mainImage = null; }
+  if (tabImage)  { URL.revokeObjectURL(tabImage.url);  tabImage  = null; }
+
+  document.getElementById('stampGrid').innerHTML = '';
+  document.getElementById('stampProgressWrap').classList.add('hidden');
+  document.getElementById('stampDoneBanner').classList.add('hidden');
+  document.getElementById('stampDropZone').classList.remove('hidden');
+  document.getElementById('s2Next').disabled = true;
+
+  clearSingle('main');
+  clearSingle('tab');
+
+  const dlBtn = document.getElementById('dlBtn');
+  dlBtn.textContent = '📦 ZIPをダウンロード';
+  dlBtn.disabled = false;
+  dlBtn.style.background = '';
+
+  selectCount(8);
+  goToStep(1);
+}
+
+// ── Toast ──
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  Object.assign(t.style, {
+    position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)',
+    background:'rgba(0,0,0,0.75)', color:'white', padding:'10px 20px',
+    borderRadius:'50px', fontSize:'0.9em', zIndex:9999, pointerEvents:'none',
+    transition:'opacity 0.4s'
+  });
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2500);
+}
+</script>
+</body>
+</html>
