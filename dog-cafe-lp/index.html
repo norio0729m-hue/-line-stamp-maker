@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAISON INU — Dog Café</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400&family=Noto+Sans+JP:wght@300;400&family=Noto+Serif+JP:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --white:      #FAFAF8;
+      --ivory:      #F2EFE9;
+      --cream:      #EDE8DF;
+      --truffle:    #2C2420;
+      --espresso:   #4A3728;
+      --caramel:    #8B6248;
+      --sage:       #8A9E8C;
+      --gold:       #C4A882;
+      --mist:       #D4CEBF;
+      --text:       #1E1A17;
+      --text-sub:   #7A6E66;
+      --divider:    #E0DAD2;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-weight: 300;
+      background: var(--white);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ===== NAV ===== */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 28px 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.5s, border-bottom 0.5s;
+    }
+    nav.scrolled {
+      background: rgba(250, 250, 248, 0.95);
+      border-bottom: 1px solid var(--divider);
+      backdrop-filter: blur(8px);
+      padding: 20px 60px;
+    }
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+      letter-spacing: 0.25em;
+      color: var(--white);
+      text-decoration: none;
+      transition: color 0.5s;
+    }
+    nav.scrolled .nav-logo { color: var(--truffle); }
+    .nav-links {
+      display: flex;
+      gap: 40px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 300;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.85);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    nav.scrolled .nav-links a { color: var(--text-sub); }
+    .nav-links a:hover { color: var(--gold); }
+    nav.scrolled .nav-links a:hover { color: var(--caramel); }
+
+    /* ===== HERO ===== */
+    .hero {
+      position: relative;
+      height: 100vh;
+      min-height: 700px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(28,20,16,0.35) 0%, rgba(28,20,16,0.1) 50%, rgba(28,20,16,0.5) 100%),
+        url('https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=1600&q=80') center/cover no-repeat;
+    }
+    .hero-content {
+      position: relative;
+      text-align: center;
+      color: var(--white);
+    }
+    .hero-eyebrow {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 300;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp 1s 0.3s forwards;
+    }
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3.5rem, 8vw, 7rem);
+      font-weight: 300;
+      line-height: 1.05;
+      letter-spacing: 0.06em;
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: fadeUp 1s 0.5s forwards;
+    }
+    .hero-title em {
+      font-style: italic;
+      color: var(--gold);
+    }
+    .hero-sub {
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(0.85rem, 1.5vw, 1rem);
+      font-weight: 300;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 56px;
+      opacity: 0;
+      animation: fadeUp 1s 0.7s forwards;
+    }
+    .hero-cta {
+      display: inline-block;
+      padding: 16px 52px;
+      border: 1px solid var(--gold);
+      font-family: 'Jost', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 300;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--white);
+      text-decoration: none;
+      transition: background 0.35s, color 0.35s;
+      opacity: 0;
+      animation: fadeUp 1s 0.9s forwards;
+    }
+    .hero-cta:hover {
+      background: var(--gold);
+      color: var(--truffle);
+    }
+    .hero-scroll {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      animation: fadeIn 1s 1.4s forwards;
+    }
+    .hero-scroll span {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+    }
+    .scroll-line {
+      width: 1px;
+      height: 48px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.5), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+
+    /* ===== CONCEPT ===== */
+    .concept {
+      padding: 140px 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 100px;
+      align-items: center;
+    }
+    .concept-text .section-label {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--caramel);
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .section-label::before {
+      content: '';
+      display: block;
+      width: 32px;
+      height: 1px;
+      background: var(--caramel);
+    }
+    .concept-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      font-weight: 300;
+      line-height: 1.6;
+      color: var(--truffle);
+      margin-bottom: 32px;
+    }
+    .concept-body {
+      font-size: 0.92rem;
+      line-height: 2.0;
+      color: var(--text-sub);
+      margin-bottom: 48px;
+    }
+    .concept-image {
+      position: relative;
+    }
+    .concept-image img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      display: block;
+    }
+    .concept-image-accent {
+      position: absolute;
+      bottom: -24px;
+      left: -24px;
+      width: 60%;
+      aspect-ratio: 1;
+      border: 1px solid var(--gold);
+      z-index: -1;
+    }
+
+    /* ===== DOGS ===== */
+    .dogs {
+      background: var(--ivory);
+      padding: 120px 60px;
+    }
+    .dogs-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section-header {
+      text-align: center;
+      margin-bottom: 72px;
+    }
+    .section-header .section-label {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--caramel);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    .section-header .section-label::before,
+    .section-header .section-label::after {
+      content: '';
+      display: block;
+      width: 32px;
+      height: 1px;
+      background: var(--caramel);
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      color: var(--truffle);
+    }
+    .dogs-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+    }
+    .dog-card {
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .dog-card img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      filter: grayscale(15%);
+    }
+    .dog-card:hover img {
+      transform: scale(1.05);
+      filter: grayscale(0%);
+    }
+    .dog-card-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(28,20,16,0.75) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.5s;
+      display: flex;
+      align-items: flex-end;
+      padding: 32px;
+    }
+    .dog-card:hover .dog-card-overlay { opacity: 1; }
+    .dog-info h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.6rem;
+      font-weight: 300;
+      color: var(--white);
+      letter-spacing: 0.05em;
+    }
+    .dog-info p {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      color: var(--gold);
+      margin-top: 4px;
+    }
+
+    /* ===== MENU ===== */
+    .menu {
+      padding: 140px 60px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      margin-top: 72px;
+    }
+    .menu-category h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      color: var(--espresso);
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--divider);
+    }
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--divider);
+    }
+    .menu-item-left {}
+    .menu-item-name {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 0.9rem;
+      font-weight: 300;
+      color: var(--truffle);
+      margin-bottom: 4px;
+    }
+    .menu-item-desc {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      letter-spacing: 0.05em;
+    }
+    .menu-item-price {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 300;
+      color: var(--caramel);
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      margin-left: 24px;
+    }
+
+    /* ===== GALLERY ===== */
+    .gallery {
+      background: var(--cream);
+      padding: 0;
+      overflow: hidden;
+    }
+    .gallery-strip {
+      display: flex;
+    }
+    .gallery-strip img {
+      width: calc(100% / 4);
+      aspect-ratio: 1;
+      object-fit: cover;
+      display: block;
+      transition: filter 0.5s;
+      filter: grayscale(20%);
+    }
+    .gallery-strip img:hover { filter: grayscale(0%); }
+
+    /* ===== ACCESS ===== */
+    .access {
+      padding: 140px 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 100px;
+      align-items: start;
+    }
+    .access-info .section-label {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--caramel);
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .access-info .section-label::before {
+      content: '';
+      display: block;
+      width: 32px;
+      height: 1px;
+      background: var(--caramel);
+    }
+    .access-info h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.4rem;
+      font-weight: 300;
+      color: var(--truffle);
+      letter-spacing: 0.08em;
+      margin-bottom: 48px;
+    }
+    .access-detail {
+      margin-bottom: 28px;
+    }
+    .access-detail dt {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--caramel);
+      margin-bottom: 8px;
+    }
+    .access-detail dd {
+      font-size: 0.9rem;
+      line-height: 1.8;
+      color: var(--text-sub);
+      font-weight: 300;
+    }
+    .access-map {
+      background: var(--ivory);
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--mist);
+      font-family: 'Jost', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      border: 1px solid var(--divider);
+    }
+
+    /* ===== RESERVATION ===== */
+    .reservation {
+      background: var(--truffle);
+      padding: 120px 60px;
+      text-align: center;
+    }
+    .reservation .section-label {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    .reservation .section-label::before,
+    .reservation .section-label::after {
+      content: '';
+      display: block;
+      width: 32px;
+      height: 1px;
+      background: var(--gold);
+      opacity: 0.5;
+    }
+    .reservation h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.4rem, 5vw, 3.8rem);
+      font-weight: 300;
+      color: var(--white);
+      letter-spacing: 0.08em;
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+    .reservation h2 em {
+      font-style: italic;
+      color: var(--gold);
+    }
+    .reservation p {
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.1em;
+      margin-bottom: 56px;
+    }
+    .reservation-cta {
+      display: inline-block;
+      padding: 18px 64px;
+      background: transparent;
+      border: 1px solid var(--gold);
+      font-family: 'Jost', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 300;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-decoration: none;
+      transition: background 0.35s, color 0.35s;
+    }
+    .reservation-cta:hover {
+      background: var(--gold);
+      color: var(--truffle);
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      background: var(--truffle);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 48px 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      font-weight: 300;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+    }
+    .footer-sns {
+      display: flex;
+      gap: 28px;
+    }
+    .footer-sns a {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .footer-sns a:hover { color: var(--gold); }
+    .footer-copy {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.2);
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.4; }
+      50%       { opacity: 1; }
+    }
+
+    /* scroll reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.9s ease, transform 0.9s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.15s; }
+    .reveal-delay-2 { transition-delay: 0.3s; }
+    .reveal-delay-3 { transition-delay: 0.45s; }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav id="nav">
+    <a href="#" class="nav-logo">MAISON INU</a>
+    <ul class="nav-links">
+      <li><a href="#concept">Concept</a></li>
+      <li><a href="#dogs">Dogs</a></li>
+      <li><a href="#menu">Menu</a></li>
+      <li><a href="#access">Access</a></li>
+      <li><a href="#reservation">Reserve</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <p class="hero-eyebrow">Dog Café — Tokyo</p>
+      <h1 class="hero-title">Where Dogs<br><em>& Moments</em><br>Belong.</h1>
+      <p class="hero-sub">犬と過ごす、静謐で上質なひととき</p>
+      <a href="#reservation" class="hero-cta">Reserve a Table</a>
+    </div>
+    <div class="hero-scroll">
+      <div class="scroll-line"></div>
+      <span>Scroll</span>
+    </div>
+  </section>
+
+  <!-- CONCEPT -->
+  <section class="concept" id="concept">
+    <div class="concept-text reveal">
+      <p class="section-label">Our Concept</p>
+      <h2 class="concept-title">都市に佇む、<br>犬たちの<br>サロン。</h2>
+      <p class="concept-body">
+        MAISON INUは、洗練された空間のなかで犬たちと特別な時間を共有できる、大人のための隠れ家カフェです。<br><br>
+        ただ犬に触れるのではなく、彼らの穏やかな存在とともに、深く息をつく場所。丁寧に選んだ食材と静謐なインテリアが、あなたの日常に小さな贅沢を加えます。
+      </p>
+      <a href="#dogs" class="hero-cta" style="color: var(--truffle); border-color: var(--gold);">Meet Our Dogs</a>
+    </div>
+    <div class="concept-image reveal reveal-delay-1">
+      <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&q=80" alt="Concept">
+      <div class="concept-image-accent"></div>
+    </div>
+  </section>
+
+  <!-- DOGS -->
+  <section class="dogs" id="dogs">
+    <div class="dogs-inner">
+      <div class="section-header reveal">
+        <p class="section-label">Our Residents</p>
+        <h2 class="section-title">Meet the Dogs</h2>
+      </div>
+      <div class="dogs-grid">
+        <div class="dog-card reveal">
+          <img src="https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=600&q=80" alt="Luna">
+          <div class="dog-card-overlay">
+            <div class="dog-info">
+              <h3>Luna</h3>
+              <p>Golden Retriever · 3 yrs</p>
+            </div>
+          </div>
+        </div>
+        <div class="dog-card reveal reveal-delay-1">
+          <img src="https://images.unsplash.com/photo-1583511655826-05700d52f4d9?w=600&q=80" alt="Coco">
+          <div class="dog-card-overlay">
+            <div class="dog-info">
+              <h3>Coco</h3>
+              <p>Toy Poodle · 2 yrs</p>
+            </div>
+          </div>
+        </div>
+        <div class="dog-card reveal reveal-delay-2">
+          <img src="https://images.unsplash.com/photo-1596797038530-2c107229654b?w=600&q=80" alt="Kuro">
+          <div class="dog-card-overlay">
+            <div class="dog-info">
+              <h3>Kuro</h3>
+              <p>Shiba Inu · 4 yrs</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MENU -->
+  <section class="menu" id="menu">
+    <div class="section-header reveal">
+      <p class="section-label">Café Menu</p>
+      <h2 class="section-title">Curated Selections</h2>
+    </div>
+    <div class="menu-grid">
+      <div class="menu-category reveal">
+        <h3>Beverages</h3>
+        <div class="menu-item">
+          <div class="menu-item-left">
+            <p class="menu-item-name">Truffle Latte</p>
+            <p class="menu-item-desc">黒トリュフ香るミルクラテ</p>
+          </div>
+          <span class="menu-item-price">¥1,200</span>
+        </div>
+        <div class="menu-item">
+          <div class="menu-item-left">
+            <p class="menu-item-name">Single Origin Pour Over</p>
+            <p class="menu-item-desc">エチオピア産シングルオリジン</p>
+          </div>
+          <span class="menu-item-price">¥1,000</span>
+        </div>
+        <div class="menu-item">
+          <div class="menu-item-left">
+            <p class="menu-item-name">Chamomile & Honey Tea</p>
+            <p class="menu-item-desc">国産はちみつ入りカモミール</p>
+          </div>
+          <span class="menu-item-price">¥900</span>
+        </div>
+        <div class="menu-item">
+          <div class="menu-item-left">
+            <p class="menu-item-name">Sparkling Yuzu Tonic</p>
+            <p class="menu-item-desc">柚子のノンアルコールトニック</p>
+          </div>
+          <span class="menu-item-price">¥950</span>
+        </div>
+      </div>
+      <div class="menu-category reveal reveal-delay-1">
+        <h3>Food</h3>
+        <div class="menu-item">
+          <div class="menu-item-left">
+            <p class="menu-item-name">Ricotta Tartine</p>
+            <p class="menu-item-desc">自家製リコッタと季節の野菜</p>
+          </div>
+          <span class="menu-item-price">¥1,400</span>
+        </div>
+        <div class="menu-item">
+          <div class="menu-item-left">
+            <p class="menu-item-name">Chestnut Mont Blanc</p>
+            <p class="menu-item-desc">国産栗のモンブラン</p>
+          </div>
+          <span class="menu-item-price">¥1,600</span>
+        </div>
+        <div class="menu-item">
+          <div class="menu-item-left">
+            <p class="menu-item-name">Seasonal Scone Set</p>
+            <p class="menu-item-desc">クロテッドクリーム添え</p>
+          </div>
+          <span class="menu-item-price">¥1,200</span>
+        </div>
+        <div class="menu-item">
+          <div class="menu-item-left">
+            <p class="menu-item-name">Dog Treat Plate</p>
+            <p class="menu-item-desc">愛犬と一緒に楽しむ手作りおやつ</p>
+          </div>
+          <span class="menu-item-price">¥800</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <div class="gallery">
+    <div class="gallery-strip">
+      <img src="https://images.unsplash.com/photo-1534361960057-19f4434c9af1?w=600&q=80" alt="">
+      <img src="https://images.unsplash.com/photo-1601758124510-52d02ddb7cbd?w=600&q=80" alt="">
+      <img src="https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=600&q=80" alt="">
+      <img src="https://images.unsplash.com/photo-1574158622682-e40e69881006?w=600&q=80" alt="">
+    </div>
+  </div>
+
+  <!-- ACCESS -->
+  <section class="access" id="access">
+    <div class="access-info reveal">
+      <p class="section-label">Find Us</p>
+      <h2>Access</h2>
+      <dl>
+        <div class="access-detail">
+          <dt>Address</dt>
+          <dd>東京都渋谷区代官山町 15-3<br>MAISON INU 1F</dd>
+        </div>
+        <div class="access-detail">
+          <dt>Hours</dt>
+          <dd>
+            平日 11:00 — 20:00<br>
+            土日祝 10:00 — 21:00<br>
+            <span style="font-size:0.8rem; margin-top:4px; display:block;">毎週火曜定休</span>
+          </dd>
+        </div>
+        <div class="access-detail">
+          <dt>Access</dt>
+          <dd>東急東横線 代官山駅 徒歩 3 分</dd>
+        </div>
+        <div class="access-detail">
+          <dt>Contact</dt>
+          <dd>03-0000-0000<br>info@maisoninu.jp</dd>
+        </div>
+      </dl>
+    </div>
+    <div class="access-map reveal reveal-delay-1">
+      MAP
+    </div>
+  </section>
+
+  <!-- RESERVATION -->
+  <section class="reservation" id="reservation">
+    <p class="section-label">Reservation</p>
+    <h2>Begin Your<br><em>Experience.</em></h2>
+    <p>特別な時間を、今すぐご予約ください。</p>
+    <a href="#" class="reservation-cta">Reserve a Table</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <span class="footer-logo">MAISON INU</span>
+    <div class="footer-sns">
+      <a href="#">Instagram</a>
+      <a href="#">Twitter</a>
+      <a href="#">Facebook</a>
+    </div>
+    <span class="footer-copy">© 2026 Maison Inu. All rights reserved.</span>
+  </footer>
+
+  <script>
+    // Nav scroll
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 60);
+    });
+
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    reveals.forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
